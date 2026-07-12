@@ -1,0 +1,22 @@
+[sqlserver]
+driver = ODBC Driver 17 for SQL Server
+server = localhost
+database = PBI_Projects
+username = YOUR_USERNAME
+password = YOUR_PASSWORD
+trust_cert = yes
+
+; optional overrides — defaults shown
+table_history    = dbo.SchwabQuotesHistory
+table_bollinger  = dbo.SchwabQuotesHistory_SparkBollinger
+table_zscore     = dbo.SchwabQuotesHistory_SparkZScore
+
+[spark]
+app_name = schwab_market_data_pyspark
+master   = local[*]
+
+; optional overrides — defaults shown
+jdbc_driver_class = com.microsoft.sqlserver.jdbc.SQLServerDriver
+jdbc_package      = com.microsoft.sqlserver:mssql-jdbc:12.8.1.jre11
+shuffle_partitions = 4
+fetch_size         = 10000
