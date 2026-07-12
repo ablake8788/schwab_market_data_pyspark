@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Sensitive — never commit
+schwab_market_data_pyspark.ini
+
+# Logs
+logs/
+*.log
+
+# Spark
+metastore_db/
+derby.log
+spark-warehouse/
+
+# IDE
+.vscode/
+.idea/
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
