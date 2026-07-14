@@ -4,6 +4,10 @@ __pycache__/
 .venv/
 venv/
 
+# Office temp files
+~$*
+~WRL*.tmp
+
 # Sensitive — never commit
 schwab_market_data_pyspark.ini
 
