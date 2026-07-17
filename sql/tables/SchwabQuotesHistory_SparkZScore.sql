@@ -1,3 +1,6 @@
+Use PBI_Projects
+GO
+
 -- dbo.SchwabQuotesHistory_SparkZScore
 -- Output table for analytics/zscore.py, written by db/analytics_writer.py.
 -- Distinct from the existing SQL-computed SchwabQuotesAnalyticsZScores*

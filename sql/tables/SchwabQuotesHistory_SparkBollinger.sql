@@ -1,4 +1,7 @@
--- dbo.SchwabQuotesHistory_SparkBollinger
+Use PBI_Projects
+GO
+
+    -- dbo.SchwabQuotesHistory_SparkBollinger
 -- Output table for analytics/bollinger.py, written by db/analytics_writer.py.
 -- Distinct from the existing SQL-computed SchwabQuotesAnalyticsBollingerBands*
 -- tables in the schwab_market_data project — this one holds Spark-computed results.
