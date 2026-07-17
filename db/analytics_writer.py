@@ -38,14 +38,21 @@ class AnalyticsWriter:
         return self._write(df, self._cfg.table_zscore, mode)
 
     def _write(self, df: DataFrame, table: str, mode: str) -> int:
-        row_count = df.count()
-        (
-            df.write.format("jdbc")
-            .option("url", jdbc_url(self._cfg))
-            .option("dbtable", table)
-            .options(**jdbc_properties(self._cfg, self._driver_class))
-            .mode(mode)
-            .save()
-        )
-        log.info("Wrote %d row(s) to %s (mode=%s)", row_count, table, mode)
-        return row_count
+        # Cache before count(): without it, count() and save() would each
+        # independently re-run the full upstream DAG (including the JDBC
+        # read this analytics DataFrame is ultimately derived from).
+        df = df.cache()
+        try:
+            row_count = df.count()
+            (
+                df.write.format("jdbc")
+                .option("url", jdbc_url(self._cfg))
+                .option("dbtable", table)
+                .options(**jdbc_properties(self._cfg, self._driver_class))
+                .mode(mode)
+                .save()
+            )
+            log.info("Wrote %d row(s) to %s (mode=%s)", row_count, table, mode)
+            return row_count
+        finally:
+            df.unpersist()

@@ -12,13 +12,12 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
 
 @dataclass
 class CliArgs:
     """Typed result of CLI argument parsing."""
-    symbols: List[str]
+    symbols: list[str]
     start: str
     end: str
     window: int
@@ -26,7 +25,7 @@ class CliArgs:
     z_threshold: float
     write_back: bool
     write_mode: str
-    log_dir: Optional[Path]
+    log_dir: Path | None
 
 
 def parse_args(argv=None) -> CliArgs:

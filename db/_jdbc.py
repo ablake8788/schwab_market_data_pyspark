@@ -15,10 +15,19 @@ from core.config import SqlConfig
 _SYMBOL_RE = re.compile(r"^[A-Za-z0-9.\-]+$")
 
 
+def _as_jdbc_bool(value: str) -> str:
+    """
+    The .ini's trust_cert follows the ODBC convention (yes/no), but the JDBC
+    driver requires the literal strings "true"/"false" — normalize here so
+    either spelling in the .ini works.
+    """
+    return "true" if value.strip().lower() in ("yes", "true", "1") else "false"
+
+
 def jdbc_url(cfg: SqlConfig) -> str:
     return (
         f"jdbc:sqlserver://{cfg.server};databaseName={cfg.database};"
-        f"trustServerCertificate={cfg.trust_cert};encrypt=true;"
+        f"trustServerCertificate={_as_jdbc_bool(cfg.trust_cert)};encrypt=true;"
     )
 
 

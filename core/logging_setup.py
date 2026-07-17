@@ -16,11 +16,11 @@ from __future__ import annotations
 import logging
 import sys
 import traceback
+from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Callable
 
 
 # ──────────────────────────────────────────────
@@ -93,7 +93,7 @@ def setup_logging(log_dir: Path | None = None) -> logging.Logger:
         file_handler.setLevel(TRACE_LEVEL)
         file_handler.setFormatter(formatter)
         root.addHandler(file_handler)
-        print(f"[logging] Log file → {log_file}")
+        print(f"[logging] Log file -> {log_file}")
     except OSError as exc:
         print(f"[logging] WARNING: Cannot open log file {log_file}: {exc}")
 
@@ -127,14 +127,14 @@ def traced(fn: Callable) -> Callable:
             [_clip(a) for a in args] +
             [f"{k}={_clip(v)}" for k, v in kwargs.items()]
         )
-        log.log(TRACE_LEVEL, "→ ENTER %s(%s)", fn.__qualname__, arg_str)
+        log.log(TRACE_LEVEL, "-> ENTER %s(%s)", fn.__qualname__, arg_str)
         try:
             result = fn(*args, **kwargs)
-            log.log(TRACE_LEVEL, "← EXIT  %s → %s", fn.__qualname__, _clip(result))
+            log.log(TRACE_LEVEL, "<- EXIT  %s -> %s", fn.__qualname__, _clip(result))
             return result
         except Exception as exc:
             log.error(
-                "✗ EXCEPTION in %s: %s\n%s",
+                "EXCEPTION in %s: %s\n%s",
                 fn.__qualname__,
                 exc,
                 traceback.format_exc(),

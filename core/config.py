@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import configparser
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -65,9 +65,6 @@ class SparkConfig:
 class AppConfig:
     sql: SqlConfig
     spark: SparkConfig
-
-    # ── Singleton bookkeeping ──────────────────
-    _instance: "AppConfig | None" = field(default=None, init=False, repr=False, compare=False)
 
     # class-level cache (not stored on instance to keep frozen=True happy)
     _cache: "AppConfig | None" = None

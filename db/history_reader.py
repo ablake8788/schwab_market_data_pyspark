@@ -68,5 +68,9 @@ class HistoryReader:
             .option("fetchsize", self._fetch_size)
             .load()
         )
-        log.info("Read %s rows for symbols=%s [%s, %s]", df.count(), clean_symbols, start, end)
+        # No .count() here on purpose: a Repository read should stay lazy.
+        # Forcing an action here would mean every call round-trips to SQL
+        # Server twice — once to count, once when the caller actually uses
+        # the DataFrame — for a number that's only useful in a log line.
+        log.info("Loaded history for symbols=%s [%s, %s]", clean_symbols, start, end)
         return df

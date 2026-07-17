@@ -68,7 +68,7 @@ def main() -> None:
         analytics_writer = AnalyticsWriter(cfg.sql, cfg.spark.jdbc_driver_class)
 
         log.info(
-            "Symbols=%s  date range: %s → %s  window=%d",
+            "Symbols=%s  date range: %s -> %s  window=%d",
             args.symbols, args.start, args.end, args.window,
         )
 
@@ -76,7 +76,11 @@ def main() -> None:
         history_df = history_reader.read(args.symbols, args.start, args.end)
 
         # ── 6. Compute analytics ────────────────
-        stats_df = add_moving_stats(history_df, args.window)
+        # stats_df is cached because both branches below (Bollinger and
+        # Z-Score) fork from it and each gets its own show()/write() action;
+        # without caching, Spark would re-run the JDBC read + window
+        # aggregation from scratch for every single one of those actions.
+        stats_df = add_moving_stats(history_df, args.window).cache()
         bollinger_df = add_bollinger_bands(stats_df, args.num_std)
         zscore_df = add_zscore(stats_df, args.z_threshold)
 
@@ -126,6 +130,7 @@ def main() -> None:
             print(f"Bollinger: {b_rows} row(s) written. Z-Score: {z_rows} row(s) written.")
             log.info("Write-back complete. Bollinger=%d ZScore=%d BatchId=%s", b_rows, z_rows, batch_id)
 
+        stats_df.unpersist()
         log.info("Run complete.")
 
     except KeyboardInterrupt:
