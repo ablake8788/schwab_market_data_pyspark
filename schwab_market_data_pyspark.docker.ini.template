@@ -1,0 +1,29 @@
+; Template for running inside docker-compose — copy to
+; schwab_market_data_pyspark.ini (the file docker-compose.yml mounts into
+; the app container).
+;
+; server = "sqlserver" resolves via the Docker Compose network to the
+; sqlserver service in docker-compose.yml, not localhost.
+
+[sqlserver]
+driver = ODBC Driver 17 for SQL Server
+server = sqlserver
+database = master
+username = sa
+password = CHANGE_ME_TO_MATCH_.env_MSSQL_SA_PASSWORD
+trust_cert = yes
+
+; optional overrides — defaults shown
+table_history    = dbo.SchwabQuotesHistory
+table_bollinger  = dbo.SchwabQuotesHistory_SparkBollinger
+table_zscore     = dbo.SchwabQuotesHistory_SparkZScore
+
+[spark]
+app_name = schwab_market_data_pyspark
+master   = local[*]
+
+; optional overrides — defaults shown
+jdbc_driver_class = com.microsoft.sqlserver.jdbc.SQLServerDriver
+jdbc_package      = com.microsoft.sqlserver:mssql-jdbc:12.8.1.jre11
+shuffle_partitions = 4
+fetch_size         = 10000

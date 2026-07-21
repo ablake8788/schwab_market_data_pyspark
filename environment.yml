@@ -1,0 +1,11 @@
+name: schwab-market-data-pyspark
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - openjdk=17
+  - pip
+  - pip:
+      - pyspark==3.5.8
+      - py4j==0.10.9.9
+      - pytest==8.3.5

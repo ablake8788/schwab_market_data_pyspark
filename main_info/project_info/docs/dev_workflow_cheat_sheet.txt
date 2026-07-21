@@ -1,0 +1,22 @@
+Dev Workflow Cheat Sheet — schwab_market_data_pyspark
+==============================================================
+Infrastructure replicated from the Sales Analytics ETL using Polars
+project on 2026-07-21. No changes made to the existing analytics logic
+(analytics/moving_stats.py, bollinger.py, zscore.py, window_specs.py) or
+db/history_reader.py, db/analytics_writer.py.
+
+| # | Phase | What happens | Key commands/files |
+|---|---|---|---|
+| 1 | Set up environment | Create venv, install deps (or use conda) | .\setup_venv.ps1  or  conda env create -f environment.yml |
+| 2 | Configure secrets | Copy template, fill real SQL Server values | copy schwab_market_data_pyspark.ini.template schwab_market_data_pyspark.ini (gitignored) |
+| 3 | Run DDL | Create the two output tables in SQL Server | .\run_sql_ddl.ps1 -Server ... -Database ...  or  sqlcmd -i sql/tables/*.sql |
+| 4 | Unit test | CLI arg parsing + config loading — no SparkSession needed | .\run_tests.ps1  ->  pytest tests/ -v |
+| 5 | Run application | Execute Spark analytics against dbo.SchwabQuotesHistory | .\run_analytics.ps1 -Symbols AAPL,MSFT -Start ... -End ...  or  python main.py --symbols ... |
+| 6 | Git check-in | Stage, verify .gitignore, commit, push | git add -A -> git status (check!) -> git commit -> git push |
+| 7 | CI | GitHub Actions runs the same lightweight tests + a --help smoke test | .github/workflows/ci.yml (Python 3.11/3.12, JDK 17) |
+| 8 | Optional: Docker | Containerized app + local SQL Server for testing | docker compose up -d sqlserver -> docker compose run --rm app ... |
+
+Prerequisites specific to this project (unlike the Polars sibling):
+- JDK 17 (Temurin recommended) — already installed on this machine, confirmed via `java -version`.
+- Windows only: winutils.exe / hadoop.dll (Hadoop 3.3.x build) on HADOOP_HOME — not needed inside the Docker container.
+- spark.jars.packages fetches mssql-jdbc from Maven Central on first run — needs internet access.

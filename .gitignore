@@ -10,6 +10,7 @@ venv/
 
 # Sensitive — never commit
 schwab_market_data_pyspark.ini
+.env
 
 # Logs
 logs/
@@ -28,3 +29,4 @@ spark-warehouse/
 .pytest_cache/
 .coverage
 htmlcov/
+pytest-results.xml
