@@ -20,3 +20,15 @@ jdbc_driver_class = com.microsoft.sqlserver.jdbc.SQLServerDriver
 jdbc_package      = com.microsoft.sqlserver:mssql-jdbc:12.8.1.jre11
 shuffle_partitions = 4
 fetch_size         = 10000
+
+; Optional — only needed by report_main.py (--send-email). Omit this
+; section entirely if you never plan to email the summary report.
+[email]
+enabled       = false
+smtp_server   = smtp.example.com
+smtp_port     = 587
+smtp_user     = YOUR_SMTP_USERNAME
+smtp_password = YOUR_SMTP_PASSWORD
+from_email    = YOUR_SMTP_USERNAME
+to_email      = recipient1@example.com, recipient2@example.com
+subject       = Schwab Market Data Analytics Summary

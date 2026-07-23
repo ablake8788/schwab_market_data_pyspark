@@ -58,6 +58,19 @@ class SparkConfig:
     fetch_size: int = 10000
 
 
+@dataclass(frozen=True)
+class EmailConfig:
+    """Optional — only required by report_main.py, not the main analytics job."""
+    enabled: bool
+    smtp_server: str
+    smtp_port: int
+    smtp_user: str
+    smtp_password: str
+    from_email: str
+    to_email: tuple[str, ...]
+    subject: str
+
+
 # ──────────────────────────────────────────────
 # Root config (Singleton)
 # ──────────────────────────────────────────────
@@ -65,6 +78,7 @@ class SparkConfig:
 class AppConfig:
     sql: SqlConfig
     spark: SparkConfig
+    email: "EmailConfig | None" = None
 
     # class-level cache (not stored on instance to keep frozen=True happy)
     _cache: "AppConfig | None" = None
@@ -117,7 +131,26 @@ class AppConfig:
             fetch_size=int(p.get("fetch_size", 10000)),
         )
 
-        instance = cls(sql=sql, spark=spark)
+        email = None
+        email_section = next(
+            (s for s in parser.sections() if s.lower() == "email"), None
+        )
+        if email_section is not None:
+            e = parser[email_section]
+            email = EmailConfig(
+                enabled=e.getboolean("enabled", fallback=False),
+                smtp_server=e["smtp_server"],
+                smtp_port=int(e.get("smtp_port", 587)),
+                smtp_user=e["smtp_user"],
+                smtp_password=e["smtp_password"],
+                from_email=e.get("from_email", e["smtp_user"]),
+                to_email=tuple(
+                    addr.strip() for addr in e["to_email"].split(",") if addr.strip()
+                ),
+                subject=e.get("subject", "Schwab Market Data Analytics Summary"),
+            )
+
+        instance = cls(sql=sql, spark=spark, email=email)
         cls._cache = instance      # cache it
         return instance
 

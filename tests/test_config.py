@@ -92,6 +92,76 @@ def test_load_missing_file_raises():
         AppConfig.load("does_not_exist.ini")
 
 
+def test_load_without_email_section_leaves_it_none(tmp_path):
+    ini_path = _write_ini(tmp_path, """
+[sqlserver]
+driver = ODBC Driver 17 for SQL Server
+server = testserver
+database = testdb
+username = testuser
+password = testpass
+""")
+
+    cfg = AppConfig.load(str(ini_path))
+
+    assert cfg.email is None
+
+
+def test_load_reads_email_section_case_insensitively(tmp_path):
+    # configparser section names are case-sensitive by default; some tools
+    # (and this project's own .ini) write "[Email]" not "[email]".
+    ini_path = _write_ini(tmp_path, """
+[sqlserver]
+driver = ODBC Driver 17 for SQL Server
+server = testserver
+database = testdb
+username = testuser
+password = testpass
+
+[Email]
+enabled = true
+smtp_server = smtp.example.com
+smtp_user = sender@example.com
+smtp_password = secret
+to_email = a@example.com
+""")
+
+    cfg = AppConfig.load(str(ini_path))
+
+    assert cfg.email is not None
+    assert cfg.email.smtp_server == "smtp.example.com"
+
+
+def test_load_reads_email_section(tmp_path):
+    ini_path = _write_ini(tmp_path, """
+[sqlserver]
+driver = ODBC Driver 17 for SQL Server
+server = testserver
+database = testdb
+username = testuser
+password = testpass
+
+[email]
+enabled = true
+smtp_server = smtp.example.com
+smtp_port = 587
+smtp_user = sender@example.com
+smtp_password = secret
+to_email = a@example.com, b@example.com
+subject = Test Subject
+""")
+
+    cfg = AppConfig.load(str(ini_path))
+
+    assert cfg.email is not None
+    assert cfg.email.enabled is True
+    assert cfg.email.smtp_server == "smtp.example.com"
+    assert cfg.email.smtp_port == 587
+    assert cfg.email.from_email == "sender@example.com"  # defaults to smtp_user
+    assert cfg.email.to_email == ("a@example.com", "b@example.com")
+    assert cfg.email.subject == "Test Subject"
+
+
 def test_load_caches_singleton(tmp_path):
     ini_path = _write_ini(tmp_path, """
 [sqlserver]

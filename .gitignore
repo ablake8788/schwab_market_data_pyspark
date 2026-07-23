@@ -35,3 +35,6 @@ pytest-results.xml
 build/
 dist/
 *.spec.bak
+
+# Generated reports
+reports/

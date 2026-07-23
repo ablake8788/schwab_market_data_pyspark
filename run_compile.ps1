@@ -10,5 +10,5 @@
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-& .\.venv\Scripts\python.exe -m compileall -q main.py core db analytics cli spark_session tests
+& .\.venv\Scripts\python.exe -m compileall -q main.py report_main.py core db analytics cli spark_session reporting tests
 exit $LASTEXITCODE
