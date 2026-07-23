@@ -12,9 +12,10 @@ No business logic lives here; it only:
   1. Parses CLI args.
   2. Sets up logging.
   3. Loads config (Singleton) — including the optional [email] section.
-  4. Queries the summary data.
-  5. Builds the .docx.
-  6. Optionally emails it.
+  4. Queries the summary data (+ per-symbol time series for charts).
+  5. Builds chart PNGs.
+  6. Builds the .docx.
+  7. Optionally emails it.
 """
 
 from __future__ import annotations
@@ -23,13 +24,17 @@ import logging
 import os
 import sys
 import traceback
+from pathlib import Path
 
 from cli import parse_report_args
 from core import AppConfig, setup_logging
+from reporting.charts import build_anomaly_count_chart, build_symbol_chart
 from reporting.connection import SqlConnectionFactory
 from reporting.queries import (
     fetch_bollinger_summary,
     fetch_overall_totals,
+    fetch_recent_symbol_bollinger,
+    fetch_symbol_anomalies_in_range,
     fetch_top_anomalies,
     fetch_zscore_summary,
 )
@@ -71,19 +76,48 @@ def main() -> None:
             zscore_summary = fetch_zscore_summary(conn, cfg.sql)
             top_anomalies = fetch_top_anomalies(conn, cfg.sql, args.top_anomalies)
 
+            symbol_timeseries: dict[str, tuple[list[dict], list[dict]]] = {}
+            if not args.no_charts:
+                chart_symbols = [
+                    row["Symbol"] for row in zscore_summary[: args.chart_symbols]
+                ]
+                for symbol in chart_symbols:
+                    bars = fetch_recent_symbol_bollinger(conn, cfg.sql, symbol, args.chart_bars)
+                    if not bars:
+                        continue
+                    anomalies = fetch_symbol_anomalies_in_range(
+                        conn, cfg.sql, symbol, bars[0]["BarDateTime"], bars[-1]["BarDateTime"]
+                    )
+                    symbol_timeseries[symbol] = (bars, anomalies)
+
         log.info(
             "Fetched summary: symbols=%s totalAnomalies=%s",
             overall.get("SymbolCount"), overall.get("TotalAnomalies"),
         )
 
-        # ── 5. Build docx ────────────────────────
+        # ── 5. Build charts ──────────────────────
+        anomaly_chart_path = None
+        symbol_charts: list[tuple[str, Path]] = []
+        if not args.no_charts:
+            charts_dir = args.output.parent / "charts"
+            print("Building charts ...")
+            anomaly_chart_path = build_anomaly_count_chart(
+                zscore_summary, charts_dir / "anomaly_count.png"
+            )
+            for symbol, (bars, anomalies) in symbol_timeseries.items():
+                path = build_symbol_chart(symbol, bars, anomalies, charts_dir / f"{symbol}.png")
+                symbol_charts.append((symbol, path))
+            log.info("Built %d chart(s)", 1 + len(symbol_charts))
+
+        # ── 6. Build docx ────────────────────────
         report_path = build_summary_docx(
-            overall, bollinger_summary, zscore_summary, top_anomalies, args.output
+            overall, bollinger_summary, zscore_summary, top_anomalies, args.output,
+            anomaly_chart_path=anomaly_chart_path, symbol_charts=symbol_charts,
         )
         print(f"Report written to {report_path}")
         log.info("Report written to %s", report_path)
 
-        # ── 6. Email (optional) ──────────────────
+        # ── 7. Email (optional) ──────────────────
         if args.send_email:
             print(f"Sending email to {', '.join(cfg.email.to_email)} ...")
             body = (

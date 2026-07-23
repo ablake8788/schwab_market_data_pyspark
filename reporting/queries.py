@@ -72,6 +72,46 @@ def fetch_top_anomalies(conn: pyodbc.Connection, sql_cfg: SqlConfig, limit: int 
     return _rows_as_dicts(cursor)
 
 
+def fetch_recent_symbol_bollinger(
+    conn: pyodbc.Connection, sql_cfg: SqlConfig, symbol: str, limit: int = 300
+) -> list[dict]:
+    """
+    The most recent `limit` non-warmup bars for one symbol, ordered
+    ascending by time (chart-ready) — for charts.build_symbol_chart().
+    """
+    cursor = conn.cursor()
+    cursor.execute(
+        f"""
+        SELECT * FROM (
+            SELECT TOP (?) BarDateTime, ClosePrice, MovingAvg, UpperBand, LowerBand
+            FROM {sql_cfg.table_bollinger}
+            WHERE Symbol = ? AND IsWarmup = 0
+            ORDER BY BarDateTime DESC
+        ) recent
+        ORDER BY BarDateTime ASC
+        """,
+        (limit, symbol),
+    )
+    return _rows_as_dicts(cursor)
+
+
+def fetch_symbol_anomalies_in_range(
+    conn: pyodbc.Connection, sql_cfg: SqlConfig, symbol: str, start, end
+) -> list[dict]:
+    """Anomaly bars for one symbol within [start, end] — to mark on a price chart."""
+    cursor = conn.cursor()
+    cursor.execute(
+        f"""
+        SELECT BarDateTime, ClosePrice, ZScore
+        FROM {sql_cfg.table_zscore}
+        WHERE Symbol = ? AND IsAnomaly = 1 AND BarDateTime BETWEEN ? AND ?
+        ORDER BY BarDateTime ASC
+        """,
+        (symbol, start, end),
+    )
+    return _rows_as_dicts(cursor)
+
+
 def fetch_overall_totals(conn: pyodbc.Connection, sql_cfg: SqlConfig) -> dict:
     """Headline totals across both output tables."""
     cursor = conn.cursor()

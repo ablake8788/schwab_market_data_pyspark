@@ -18,6 +18,9 @@ class ReportCliArgs:
     output: Path
     send_email: bool
     top_anomalies: int
+    chart_symbols: int
+    chart_bars: int
+    no_charts: bool
     log_dir: Optional[Path]
 
 
@@ -58,6 +61,25 @@ Examples
         help="Number of most-extreme anomalies to list (default: 15)",
     )
     parser.add_argument(
+        "--chart-symbols",
+        type=int,
+        default=3,
+        metavar="N",
+        help="Number of most-anomalous symbols to chart individually (default: 3)",
+    )
+    parser.add_argument(
+        "--chart-bars",
+        type=int,
+        default=300,
+        metavar="N",
+        help="Number of most-recent bars per symbol chart (default: 300)",
+    )
+    parser.add_argument(
+        "--no-charts",
+        action="store_true",
+        help="Skip chart generation entirely (tables only, faster)",
+    )
+    parser.add_argument(
         "--log-dir",
         metavar="DIR",
         type=Path,
@@ -69,5 +91,8 @@ Examples
         output=ns.output,
         send_email=ns.send_email,
         top_anomalies=ns.top_anomalies,
+        chart_symbols=ns.chart_symbols,
+        chart_bars=ns.chart_bars,
+        no_charts=ns.no_charts,
         log_dir=ns.log_dir,
     )
